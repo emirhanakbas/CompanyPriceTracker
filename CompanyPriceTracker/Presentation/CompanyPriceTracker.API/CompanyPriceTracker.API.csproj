@@ -16,4 +16,8 @@
     <ProjectReference Include="..\..\Infrastructure\CompanyPriceTracker.Persistence\CompanyPriceTracker.Persistence.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Controllers\" />
+  </ItemGroup>
+
 </Project>
