@@ -1,4 +1,4 @@
-@CompanyPriceTracker.API_HostAddress = http://localhost:5236
+@CompanyPriceTracker.API_HostAddress = http://localhost:5019
 
 GET {{CompanyPriceTracker.API_HostAddress}}/weatherforecast/
 Accept: application/json

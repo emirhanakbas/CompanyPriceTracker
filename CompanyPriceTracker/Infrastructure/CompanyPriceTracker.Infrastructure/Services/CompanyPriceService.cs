@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using CompanyPriceTracker.Application.Abstractions.Services; // 'ICompanyPriceService'
 using CompanyPriceTracker.Application.DTOs.CompanyPrice;     // CompanyPrice DTOs
 using CompanyPriceTracker.Application.DTOs.Offer;            // Offer DTOs
+using CompanyPriceTracker.Application.DTOs.ServiceResult;
 using CompanyPriceTracker.Domain.Entities;                   // 'CompanyPrice'
 using CompanyPriceTracker.Domain.Repositories;               // 'ICompanyPriceRepository'
 
@@ -19,17 +20,21 @@ namespace CompanyPriceTracker.Infrastructure.Services {
             _companyRepository = companyRepository;
         }
 
-        public async Task<CompanyPriceResponseDTO> AddCompanyPriceAsync(CompanyPriceCreateDTO companyPriceDTO) {
+        public async Task<ServiceResult<CompanyPriceResponseDTO>> AddCompanyPriceAsync(CompanyPriceCreateDTO companyPriceDTO) {
             var existingCompany = await _companyRepository.GetByIdAsync(companyPriceDTO.CompanyId);
+            
             if(existingCompany == null) { // fiyat eklenecek firmanın var olup olmadığını kontrol etme
-                throw new ArgumentException($"Company with ID {companyPriceDTO.CompanyId} not found.");
+                return ServiceResult<CompanyPriceResponseDTO>.Failure(error: "Company with ID " + companyPriceDTO.CompanyId + " not found.", message: "Company not found for price addition.");
+                //throw new ArgumentException($"Company with ID {companyPriceDTO.CompanyId} not found.");
             }
-
+            
             var existingPrice = await _companyPriceRepository.GetPriceByCompanyAndYearAsync(companyPriceDTO.CompanyId, companyPriceDTO.Year);
+            
             if(existingPrice != null) { // eklenecek fiyatın yıl ve firmaya göre kontrolü
-                throw new InvalidOperationException($"Company price for company ID {companyPriceDTO.CompanyId} and year {companyPriceDTO.Year} already exits.");
+                return ServiceResult<CompanyPriceResponseDTO>.Failure(error: "Company price for company ID " + companyPriceDTO.CompanyId + " and year" + companyPriceDTO.Year + " already exits.");
+                //throw new InvalidOperationException($"Company price for company ID {companyPriceDTO.CompanyId} and year {companyPriceDTO.Year} already exits.");
             }
-
+            
             var companyPrice = new CompanyPrice { // gelen DTO'nun domain entity'sine çevrilmesi
                 CompanyId = companyPriceDTO.CompanyId,
                 Year = companyPriceDTO.Year,
@@ -37,41 +42,34 @@ namespace CompanyPriceTracker.Infrastructure.Services {
             };
 
             await _companyPriceRepository.AddAsync(companyPrice); // repository aracılığıyla veritabanına ekleme
-            return new CompanyPriceResponseDTO { //veritabanına eklenen entity'i CompanyPriceResponseDTO'su olarak döndürme
+
+            var responseDTO = new CompanyPriceResponseDTO {
                 Id = companyPrice.Id,
                 CompanyId = companyPrice.CompanyId,
                 Year = companyPrice.Year,
                 Price = companyPrice.Price
             };
-        }
-    
-        public async Task<OfferResponseDTO> CalculateOfferAsync(OfferRequestDTO offerRequestDTO) {
-            var company = await _companyRepository.GetByIdAsync(offerRequestDTO.CompanyId);
-            if (company == null) {
-                throw new ArgumentException($"Company with ID {offerRequestDTO.CompanyId} not found.");
-            }
-            var companyPrice = await _companyPriceRepository.GetLatestPriceByCompanyIdAsync(offerRequestDTO.CompanyId);
-            if (companyPrice == null) {
-                throw new InvalidOperationException($"No price found for company '{company.Name}' (ID: {offerRequestDTO.CompanyId}. Cannot calculate offer.");
-            }
-            double unitPrice = (double)companyPrice.Price;
-            double totalPrice = unitPrice * offerRequestDTO.ExpertDayCount;
-            return new OfferResponseDTO {
-                ExpertDayCount = offerRequestDTO.ExpertDayCount,
-                UnitPrice = unitPrice,
-                TotalPrice = totalPrice,
-                Currency = "₺"
-            };
+
+            return ServiceResult<CompanyPriceResponseDTO>.Success(responseDTO, "Company price added successfully.");
         }
 
-        public async Task<IEnumerable<CompanyPriceResponseDTO>> GetCompanyPricesAsync(string companyId) {
-            var companyPrices = await _companyPriceRepository.GetPricesByCompanyIdAsync(companyId);
-            return companyPrices.Select(companyPrices => new CompanyPriceResponseDTO {
-                Id = companyPrices.Id,
-                CompanyId = companyPrices.CompanyId,
-                Year = companyPrices.Year,
-                Price = companyPrices.Price
-            }).OrderByDescending(companyPrices => companyPrices.Year);
+        public async Task<ServiceResult<OfferResponseDTO>> CalculateOfferAsync(OfferRequestDTO offerRequestDTO) {
+            //    var company = await _companyRepository.GetByIdAsync(offerRequestDTO.CompanyId);
+            //    if (company == null) {
+            //        throw new ArgumentException($"Company with ID {offerRequestDTO.CompanyId} not found.");
+            //    }
+            //    var companyPrice = await _companyPriceRepository.GetLatestPriceByCompanyIdAsync(offerRequestDTO.CompanyId);
+            //    if (companyPrice == null) {
+            //        throw new InvalidOperationException($"No price found for company '{company.Name}' (ID: {offerRequestDTO.CompanyId}. Cannot calculate offer.");
+            //    }
+            //    double unitPrice = (double)companyPrice.Price;
+            //    double totalPrice = unitPrice * offerRequestDTO.ExpertDayCount;
+
+            //}
+        }
+
+        public async Task<ServiceResult<IEnumerable<CompanyPriceResponseDTO>>> GetCompanyPricesAsync(string companyId) {
+            
         }
     }
 }

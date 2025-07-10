@@ -1,6 +1,7 @@
 ﻿using CompanyPriceTracker.Application.Abstractions.Services; // 'ICompanyService'
 using CompanyPriceTracker.Application.DTOs.Company;          // Company DTOs
-using CompanyPriceTracker.Application.DTOs.CompanyPrice;
+using CompanyPriceTracker.Application.DTOs.CompanyPrice;     // CompanyPriceDTOs
+using CompanyPriceTracker.Application.DTOs.ServiceResult;    // 'ServiceResult'
 using CompanyPriceTracker.Domain.Entities;                   // 'Company'
 using CompanyPriceTracker.Domain.Repositories;               // 'ICompanyRepository'
 using System;
@@ -20,9 +21,9 @@ namespace CompanyPriceTracker.Infrastructure.Services {
             _companyPriceService = companyPriceService;
         }
 
-        public async Task<CompanyResponseWithDetailsDTO> CreateCompanyAsync(CompanyCreateWithDetailsDTO companyDTO) { // AutoMapper kütüphanesi ile otomatik yapılabilir
+        public async Task<ServiceResult<CompanyResponseWithDetailsDTO>> CreateCompanyAsync(CompanyCreateWithDetailsDTO companyDTO) { // AutoMapper kütüphanesi ile otomatik yapılabilir
             var company = new Company { // AutoMapper kesin yap
-                Name = companyDTO.Name // DTO'dan gelen ad entity'e atanıyor; Id mongodb tarafından otomatik olarak oluşturulacak
+                Name = companyDTO.Name // DTO'dan gelen ad entity'e atanıyor; Id MongoDB tarafından otomatik olarak oluşturulacak
             };
             await _companyRepository.AddAsync(company); // domain entity'si repository aracılığı ile veritabanına eklenir
             
@@ -31,16 +32,20 @@ namespace CompanyPriceTracker.Infrastructure.Services {
                 Year = companyDTO.Year,
                 Price = companyDTO.Price
             };
-            // serviceresult generic class tüm dönüşler böyle olacak 
+           
             var createdPriceResponse = await _companyPriceService.AddCompanyPriceAsync(companyPriceWithYear);
-            
-            return new CompanyResponseWithDetailsDTO {  // dış dünyaya dönecek CompanyResponseDTO oluyor
+            if(!createdPriceResponse.IsSuccess) {
+                return ServiceResult<CompanyResponseWithDetailsDTO>.Failure(message: "Company created but price addition failed.", errors: createdPriceResponse.Errors);
+            }
+
+            var responseDto = new CompanyResponseWithDetailsDTO {
                 Id = company.Id,
                 Name = company.Name,
-                Prices = new List<CompanyPriceResponseDTO> { createdPriceResponse }
+                Prices = new List<CompanyPriceResponseDTO> { createdPriceResponse.Data! }
             };
+            return ServiceResult<CompanyResponseWithDetailsDTO>.Success(responseDto, "Company and initial price created successfully.");
         }
-        //ilist ienum farkları
+
         public async Task<IEnumerable<CompanyResponseWithDetailsDTO>> GetAllCompaniesAsync() {
             var companies = await _companyRepository.GetAllAsync(); // repository aracılığı ile tüm company entity'leri veritabanından çekilir
             return companies.Select(company => new CompanyResponseWithDetailsDTO { // Select LINQ
@@ -49,20 +54,23 @@ namespace CompanyPriceTracker.Infrastructure.Services {
             });
         }
 
-        public async Task<CompanyResponseWithDetailsDTO?> GetCompanyByIdAsync(string id) {
+        public async Task<ServiceResult<CompanyResponseWithDetailsDTO?>> GetCompanyByIdAsync(string id) {
             var company = await _companyRepository.GetByIdAsync(id); // repository'den id ile çekiliyor
-            
             if(company == null) {
-                return null;
+                return ServiceResult<CompanyResponseWithDetailsDTO?>.Failure($"Company with ID {id} not found.", "Company not found.");
             }
 
             var prices = await _companyPriceService.GetCompanyPricesAsync(company.Id!);
+            if(!prices.IsSuccess) {
+                return ServiceResult<CompanyResponseWithDetailsDTO?>.Failure(message: "Company found but failed to retrieve prices.", errors: prices.Errors);
+            }
 
-            return new CompanyResponseWithDetailsDTO { // bulunan domain entity CompanyResponseDTO'ya çevrilip döndürülüyor
+            var responseDTO = new CompanyResponseWithDetailsDTO {
                 Id = company.Id,
                 Name = company.Name,
-                Prices = prices.ToList()
+                Prices = prices.Data!.ToList()
             };
+            return ServiceResult<CompanyResponseWithDetailsDTO?>.Success(responseDTO, "Company details retrieved successfully.");
         }
     }
 }

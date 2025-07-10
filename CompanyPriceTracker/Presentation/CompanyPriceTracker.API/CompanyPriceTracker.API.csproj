@@ -4,9 +4,14 @@
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>c60c5d8c-7e81-4ef9-91cf-a73cffe30763</UserSecretsId>
+    <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+    <DockerfileContext>..\..</DockerfileContext>
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="8.0.18" />
+    <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.22.1-Preview.1" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
   </ItemGroup>
 
@@ -14,10 +19,6 @@
     <ProjectReference Include="..\..\Core\CompanyPriceTracker.Application\CompanyPriceTracker.Application.csproj" />
     <ProjectReference Include="..\..\Infrastructure\CompanyPriceTracker.Infrastructure\CompanyPriceTracker.Infrastructure.csproj" />
     <ProjectReference Include="..\..\Infrastructure\CompanyPriceTracker.Persistence\CompanyPriceTracker.Persistence.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Controllers\" />
   </ItemGroup>
 
 </Project>
