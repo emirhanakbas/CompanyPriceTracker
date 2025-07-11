@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace CompanyPriceTracker.Application.DTOs.ServiceResult {
     /// <summary>
-    /// Frontend'e giden isteklerin tutarlı olmasını sağlar. Non-generic ServiceResult
+    /// Non-generic ServiceResult - Frontend'e giden isteklerin tutarlı olmasını sağlar.
     /// </summary>
     /// <param name=""></param>
     /// <returns></returns>
@@ -44,11 +44,21 @@ namespace CompanyPriceTracker.Application.DTOs.ServiceResult {
     /// <returns></returns
     public class ServiceResult<T> : ServiceResult {
         public T? Data { get; set; }
-
+        
+        /// <summary>
+        /// Başarılı durumlar için
+        /// </summary>
+        /// <param name=""></param>
+        /// <returns></returns
         public static ServiceResult<T> Success(T data, string? message = null) {
             return new ServiceResult<T> { IsSuccess = true, Data = data, Message = message };
         }
-
+        
+        /// <summary>
+        /// Başarısız durumlar için
+        /// </summary>
+        /// <param name=""></param>
+        /// <returns></returns
         public static ServiceResult<T> Failure(string? message = null, List<string>? errors = null) {
             return new ServiceResult<T> { IsSuccess = false, Message = message, Errors = errors };
         }

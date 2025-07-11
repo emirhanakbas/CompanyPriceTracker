@@ -12,8 +12,11 @@ namespace CompanyPriceTracker.Domain.Entities {
         [BsonId]
         [BsonRepresentation(BsonType.ObjectId)]
         public string Id { get; set; }   // firma benzersiz ID
+        [BsonElement("name")]
         public string Name { get; set; } // firma adı
         public Company() { }             // default constructor
-        public Company(string name) { }  // dışarıdan alımda constructor overloading
+        public Company(string name) { // dışarıdan alımda constructor overloading
+            Name = name;
+        }  
     }
 } 

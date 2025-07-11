@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 namespace CompanyPriceTracker.Application.Abstractions.Services {
     public interface ICompanyService {
         public Task<ServiceResult<CompanyResponseWithDetailsDTO>> CreateCompanyAsync (CompanyCreateWithDetailsDTO companyDTO);   
-        public Task<IEnumerable<CompanyResponseWithDetailsDTO>> GetAllCompaniesAsync();
+        public Task<ServiceResult<IEnumerable<CompanyResponseWithDetailsDTO>>> GetAllCompaniesAsync();
         public Task<ServiceResult<CompanyResponseWithDetailsDTO?>> GetCompanyByIdAsync(string id);
     }
 }

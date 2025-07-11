@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 namespace CompanyPriceTracker.Application.Abstractions.Services {
     public interface ICompanyPriceService {
         Task<ServiceResult<CompanyPriceResponseDTO>> AddCompanyPriceAsync(CompanyPriceCreateDTO CompanyPriceDTO);
-        Task<ServiceResult<IEnumerable<CompanyPriceResponseDTO>>> GetCompanyPricesAsync(string companyId);
         Task<ServiceResult<OfferResponseDTO>> CalculateOfferAsync(OfferRequestDTO OfferRequestDTO);
+        Task<ServiceResult<IEnumerable<CompanyPriceResponseDTO>>> GetCompanyPricesAsync(string companyId);
     }
 }
