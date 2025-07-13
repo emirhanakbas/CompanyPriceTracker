@@ -32,5 +32,9 @@ namespace CompanyPriceTracker.Persistence.Repositories {
         public async Task<Company?> GetByIdAsync(string id) { // belirli bir firmayı id'sine göre getirme  
             return await _companiesCollection.Find(company => company.Id == id).FirstOrDefaultAsync(); // DB'den parametre id'ye eşit olanı bulur, varsa döndürür; yoksa null döndürür
         }
+
+        public async Task<Company?> GetByNameAsync(string name) {
+            return await _companiesCollection.Find(company => company.Name == name).FirstOrDefaultAsync();
+        }
     }
 }

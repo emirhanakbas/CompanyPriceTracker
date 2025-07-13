@@ -9,8 +9,9 @@ namespace CompanyPriceTracker.Domain.Repositories {
     // Company Repository'deki fonksiyonların prototipleri, interface'leri. Core/Domain/Repository içinde interface tanımlayıp dışarıdan
     // implementasyon yapmak DEPENDECY INJECTION örneğidir. D.INJ., SOLID'deki DEPENDENCY INVERSION'un nasıl uygulandığıdır.
     public interface ICompanyRepository {
-        Task AddAsync(Company company);            // yeni bir firma ekleme
-        Task<IEnumerable<Company>> GetAllAsync(); // firmaların listesini alma
-        Task<Company?> GetByIdAsync(string id);   // firma id'sine göre firma çekme 
+        Task AddAsync(Company company);             // yeni bir firma ekleme
+        Task<IEnumerable<Company>> GetAllAsync();   // firmaların listesini alma
+        Task<Company?> GetByIdAsync(string id);     // firma id'sine göre firma çekme 
+        Task<Company?> GetByNameAsync(string name); // firma adına göre firma çekme
     }
 }

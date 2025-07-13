@@ -25,40 +25,58 @@ namespace CompanyPriceTracker.Infrastructure.Services {
         }
 
         public async Task<ServiceResult<CompanyResponseWithDetailsDTO>> CreateCompanyAsync(CompanyCreateWithDetailsDTO companyDTO) {
-            var company = _mapper.Map<Company>(companyDTO); // companyDTO -> CompanyEntity Mapping
-            //var company = new Company { // Manuel Mapping
-            //    Name = companyDTO.Name  // DTO'dan gelen ad entity'e atanıyor; Id MongoDB tarafından otomatik olarak oluşturulacak
-            //};
-            await _companyRepository.AddAsync(company); // domain entity'si repository aracılığı ile veritabanına eklenir
-
+            Company? company = await _companyRepository.GetByNameAsync(companyDTO.Name);
+            bool isNewCompany = false;
+            if (company == null) {
+                company = _mapper.Map<Company>(companyDTO); // companyDTO -> CompanyEntity Mapping
+                await _companyRepository.AddAsync(company); // domain entity'si repository aracılığı ile veritabanına eklenir
+                isNewCompany = true;
+            } else {
+                Console.WriteLine("Company " + company.Name + " already exists with ID: " + company.Id + ". Adding new price to existing company.");
+            }
             var companyPriceWithYearAndPrice = new CompanyPriceCreateDTO {
                 CompanyId = company.Id!,
                 Year = companyDTO.Year,
                 Price = companyDTO.Price
             }; // AutoMapper ile nasıl yapılır?
-
+            //var companyPriceWithYearAndPrice = _mapper.Map<CompanyPriceCreateDTO>(companyDTO);
+            //companyPriceWithYearAndPrice.CompanyId = company.Id!;
             var createdPriceResponse = await _companyPriceService.AddCompanyPriceAsync(companyPriceWithYearAndPrice);
             if(!createdPriceResponse.IsSuccess) {
                 return ServiceResult<CompanyResponseWithDetailsDTO>.Failure(message: "Company created but price addition failed.", errors: createdPriceResponse.Errors);
             }
-
             var responseDto = _mapper.Map<CompanyResponseWithDetailsDTO>(company); // Company Entity -> CompanyResponseWithDetailsDTO Mapping
-            //var responseDto = new CompanyResponseWithDetailsDTO { // Manuel Map
-            //    Id = company.Id,
-            //    Name = company.Name,
-            //    Prices = new List<CompanyPriceResponseDTO> { createdPriceResponse.Data! }
-            //};
-            return ServiceResult<CompanyResponseWithDetailsDTO>.Success(responseDto, "Company and initial price created successfully.");
+            /*var responseDto = new CompanyResponseWithDetailsDTO { // Manuel Map
+                Id = company.Id,
+                Name = company.Name,
+                Prices = new List<CompanyPriceResponseDTO> { createdPriceResponse.Data! }
+            };*/
+            if(createdPriceResponse.Data != null) {
+                responseDto.Prices.Add(createdPriceResponse.Data);
+            }
+            string successMessage = isNewCompany ? "New company and initial price created successfully." : "Price added to existing company successfully.";
+            return ServiceResult<CompanyResponseWithDetailsDTO>.Success(responseDto, successMessage);
         }
 
         public async Task<ServiceResult<IEnumerable<CompanyResponseWithDetailsDTO>>> GetAllCompaniesAsync() {
             var companies = await _companyRepository.GetAllAsync(); // repository aracılığı ile tüm company entity'leri veritabanından çekilir
-            var responseDtos = _mapper.Map<IEnumerable<CompanyResponseWithDetailsDTO>>(companies);
-            //return companies.Select(company => new CompanyResponseWithDetailsDTO { // Select LINQ
-            //    Id = company.Id,
-            //    Name = company.Name
-            //});
-            return ServiceResult<IEnumerable<CompanyResponseWithDetailsDTO>>.Success(responseDtos, "All companies retrieved successfully.");
+            var responseDTOs = new List<CompanyResponseWithDetailsDTO>();
+            foreach(var company in companies) {
+                var companyDTO = _mapper.Map<CompanyResponseWithDetailsDTO>(company);
+                var prices = await _companyPriceService.GetCompanyPricesAsync(company.Id!);
+                if(prices.IsSuccess && prices.Data! == null) {
+                    companyDTO.Prices = prices.Data.ToList();
+                } else {
+                    companyDTO.Prices = new List<CompanyPriceResponseDTO>();
+                }
+                responseDTOs.Add(companyDTO);
+            }
+            //var responseDtos = _mapper.Map<IEnumerable<CompanyResponseWithDetailsDTO>>(companies);
+            /*return companies.Select(company => new CompanyResponseWithDetailsDTO { // Select LINQ
+                Id = company.Id,
+                Name = company.Name
+            });*/
+            return ServiceResult<IEnumerable<CompanyResponseWithDetailsDTO>>.Success(responseDTOs, "All companies retrieved successfully.");
         }
 
         public async Task<ServiceResult<CompanyResponseWithDetailsDTO?>> GetCompanyByIdAsync(string id) {
@@ -73,11 +91,11 @@ namespace CompanyPriceTracker.Infrastructure.Services {
             }
 
             var responseDto = _mapper.Map<CompanyResponseWithDetailsDTO>(company); // Company Entity -> CompanyResponseWithDetailsDTO Mapping
-            //var responseDTO = new CompanyResponseWithDetailsDTO {
-            //    Id = company.Id,
-            //    Name = company.Name,
-            //    Prices = prices.Data!.ToList()
-            //};
+            /*var responseDTO = new CompanyResponseWithDetailsDTO {
+                Id = company.Id,
+                Name = company.Name,
+                Prices = prices.Data!.ToList()
+            };*/
             if (prices.Data != null) {
                 responseDto.Prices = prices.Data.ToList(); 
             } else {

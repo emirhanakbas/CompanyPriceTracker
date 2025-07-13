@@ -1,5 +1,6 @@
 ﻿using CompanyPriceTracker.Application.DTOs.Company;
 using CompanyPriceTracker.Application.DTOs.ServiceResult;
+using CompanyPriceTracker.Domain.Entities;
 using System;
 using System.Collections.Generic;
 using System.Linq;

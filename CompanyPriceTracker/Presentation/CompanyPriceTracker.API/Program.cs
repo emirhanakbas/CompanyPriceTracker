@@ -1,5 +1,7 @@
 using CompanyPriceTracker.Application.Abstractions.Services;
 using CompanyPriceTracker.Application.DTOs.Company;
+using CompanyPriceTracker.Application.DTOs.CompanyPrice;
+using CompanyPriceTracker.Application.DTOs.Offer;
 using CompanyPriceTracker.Application.Profiles;
 using CompanyPriceTracker.Domain.Repositories;
 using CompanyPriceTracker.Infrastructure.Services;
@@ -19,7 +21,6 @@ builder.Services.AddScoped<ICompanyPriceService, CompanyPriceService>();
 builder.Services.AddAutoMapper(typeof(MappingProfile).Assembly);
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-builder.Services.AddAutoMapper(typeof(MappingProfile).Assembly);
 
 var app = builder.Build();
 
@@ -66,6 +67,57 @@ app.MapGet("api/companies/{id}", async (
     })
     .WithName("GetCompanyById")
     .WithOpenApi();
+
+/// <summary>
+/// Tüm þirketleri getirme
+/// </summary>
+/// <param name=""></param>
+/// <returns></returns>
+app.MapGet("api/companies", async (
+    ICompanyService companyService) => {
+        var result = await companyService.GetAllCompaniesAsync();
+        if(result.IsSuccess) {
+            return Results.Ok(result.Data);
+        }
+        return Results.NotFound(result.Errors);
+    })
+    .WithName("GetAllCompanies")
+    .WithOpenApi();
+
+/// <summary>
+/// Þirket Fiyatý Ekleme
+/// </summary>
+/// <param name=""></param>
+/// <returns></returns>
+app.MapPost("/api/companyprices", async (
+    [FromBody] CompanyPriceCreateDTO companyPriceDTO, ICompanyPriceService companyPriceService) => {
+        var result = await companyPriceService.AddCompanyPriceAsync(companyPriceDTO);
+        if(result.IsSuccess) {
+            return Results.Created("/api/companyprices/" + result.Data!.Id, result.Data);
+        }
+        return Results.BadRequest(result.Errors);
+    })
+    .WithName("AddCompanyPrice")
+    .WithOpenApi();
+
+
+/// <summary>
+/// Teklif Hesaplama
+/// </summary>
+/// <param name="requestDto">Teklif hesaplama için þirket ID ve ay süresi bilgileri</param>
+/// <param name="companyPriceService">Þirket fiyat iþlemleri servisi</param>
+/// <returns>Hesaplanan teklif miktarý</returns>
+app.MapPost("/api/offers/calculate", async (
+    [FromBody] OfferRequestDTO requestDTO, ICompanyPriceService companyPriceService) => {
+        var result = await companyPriceService.CalculateOfferAsync(requestDTO);
+
+        if (result.IsSuccess) {
+            return Results.Ok(result.Data);
+        }
+        return Results.BadRequest(result.Errors);
+    })
+    .WithName("CalculateOffer")
+    .WithOpenApi(); 
 
 app.Run();
 
