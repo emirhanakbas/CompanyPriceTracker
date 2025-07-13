@@ -64,7 +64,7 @@ namespace CompanyPriceTracker.Infrastructure.Services {
             foreach(var company in companies) {
                 var companyDTO = _mapper.Map<CompanyResponseWithDetailsDTO>(company);
                 var prices = await _companyPriceService.GetCompanyPricesAsync(company.Id!);
-                if(prices.IsSuccess && prices.Data! == null) {
+                if(prices.IsSuccess && prices.Data! != null) {
                     companyDTO.Prices = prices.Data.ToList();
                 } else {
                     companyDTO.Prices = new List<CompanyPriceResponseDTO>();

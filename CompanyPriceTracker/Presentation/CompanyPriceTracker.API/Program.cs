@@ -33,10 +33,14 @@ if (app.Environment.IsDevelopment()) {
 app.UseHttpsRedirection();
 
 /// <summary>
-/// Yeni Þirket Oluþturma
+/// Yeni Sirket Oluþturma
 /// </summary>
-/// <param name=""></param>
-/// <returns></returns>
+/// <param name="companyDTO">Sirket bilgileri</param>
+/// <param name="companyService">Sirket islemleri servisi</param>
+/// <returns>
+/// Olusturulan sirketin detaylarýný içeren bir HTTP 201 Created yanýtý
+/// Basarisiz durumda HTTP 400 Bad Request ve hata mesajlari
+/// </returns>
 app.MapPost("/api/companies", async (
     [FromBody] CompanyCreateWithDetailsDTO companyDTO, ICompanyService companyService) => {
         var result = await companyService.CreateCompanyAsync(companyDTO);
@@ -50,10 +54,14 @@ app.MapPost("/api/companies", async (
     .WithOpenApi();
 
 /// <summary>
-/// ID ile Þirket Çekme
+/// ID ile Sirket Getirme
 /// </summary>
-/// <param name=""></param>
-/// <returns></returns>
+/// <param name="id">Sirket ID'si</param>
+/// <param name="companyService">Sirket islemleri servisi</param>
+/// <returns>
+/// Belirtilen ID'ye sahip sirketin detaylarini iceren bir HTTP 200 OK yaniti
+/// Gecersiz istek durumunda HTTP 400 Bad Request ve hata mesajlari 
+/// </returns>
 app.MapGet("api/companies/{id}", async (
     [FromRoute] string id, ICompanyService companyService) => {
         var result = await companyService.GetCompanyByIdAsync(id);
@@ -69,10 +77,13 @@ app.MapGet("api/companies/{id}", async (
     .WithOpenApi();
 
 /// <summary>
-/// Tüm þirketleri getirme
+/// Tum Sirketleri Getirme
 /// </summary>
-/// <param name=""></param>
-/// <returns></returns>
+/// <param name="companyService">Sirket islemleri servisi</param>
+/// <returns>
+/// Tum sirketlerin listesini iceren bir HTTP 200 OK yaniti
+/// Sirket bulunamazsa (liste bossa) HTTP 404 Not Found ve hata mesajlari
+/// </returns>
 app.MapGet("api/companies", async (
     ICompanyService companyService) => {
         var result = await companyService.GetAllCompaniesAsync();
@@ -85,10 +96,14 @@ app.MapGet("api/companies", async (
     .WithOpenApi();
 
 /// <summary>
-/// Þirket Fiyatý Ekleme
+/// Sirket Fiyatý Ekleme
 /// </summary>
-/// <param name=""></param>
-/// <returns></returns>
+/// <param name="companyPriceDTO">Sirket bilgileri</param>
+/// <param name="companyPriceService">Sirket fiyat islemleri servisi</param>
+/// <returns>
+/// Olusturulan sirket fiyatinin detaylarini icrene bir HTTP 201 Created yaniti
+/// Basarisiz durumda HTTP 400 Bad Request ve hata mesajlari
+/// </returns>
 app.MapPost("/api/companyprices", async (
     [FromBody] CompanyPriceCreateDTO companyPriceDTO, ICompanyPriceService companyPriceService) => {
         var result = await companyPriceService.AddCompanyPriceAsync(companyPriceDTO);
@@ -104,9 +119,12 @@ app.MapPost("/api/companyprices", async (
 /// <summary>
 /// Teklif Hesaplama
 /// </summary>
-/// <param name="requestDto">Teklif hesaplama için þirket ID ve ay süresi bilgileri</param>
-/// <param name="companyPriceService">Þirket fiyat iþlemleri servisi</param>
-/// <returns>Hesaplanan teklif miktarý</returns>
+/// <param name="requestDTO">Teklif hesaplama için sirket ID ve ay süresi bilgileri</param>
+/// <param name="companyPriceService">Sirket fiyat islemleri servisi</param>
+/// <returns>
+/// Hesaplanan teklif miktarini iceren bir HTTP 200 OK yaniti
+/// Basarisiz durumda HTTP 400 Bad Request ve hata mesajlari
+/// </returns>
 app.MapPost("/api/offers/calculate", async (
     [FromBody] OfferRequestDTO requestDTO, ICompanyPriceService companyPriceService) => {
         var result = await companyPriceService.CalculateOfferAsync(requestDTO);
