@@ -1,26 +1,76 @@
+using CompanyPriceTracker.API.Filters;
 using CompanyPriceTracker.Application.Abstractions.Services;
+using CompanyPriceTracker.Application.DTOs.Authentication;
 using CompanyPriceTracker.Application.DTOs.Company;
 using CompanyPriceTracker.Application.DTOs.CompanyPrice;
 using CompanyPriceTracker.Application.DTOs.Offer;
 using CompanyPriceTracker.Application.Profiles;
+using CompanyPriceTracker.Application.Validators;
 using CompanyPriceTracker.Domain.Repositories;
 using CompanyPriceTracker.Infrastructure.Services;
 using CompanyPriceTracker.Persistence.Repositories;
 using CompanyPriceTracker.Persistence.Settings;
+using FluentValidation;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.DependencyInjection;
-using MongoDB.Driver;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Services.AddValidatorsFromAssemblyContaining<LoginRequestValidator>(); // Ýçinde bulunduðu assembly'deki tüm validator'larý çeker
 builder.Services.Configure<MongoDbSettings>(builder.Configuration.GetSection("MongoDbSettings"));
 builder.Services.AddSingleton<ICompanyRepository, CompanyRepository>();
 builder.Services.AddSingleton<ICompanyPriceRepository, CompanyPriceRepository>();
+builder.Services.AddSingleton<IUserRepository, UserRepository>();
 builder.Services.AddScoped<ICompanyService, CompanyService>();
 builder.Services.AddScoped<ICompanyPriceService, CompanyPriceService>();
+builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
 builder.Services.AddAutoMapper(typeof(MappingProfile).Assembly);
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(option => {
+    option.SwaggerDoc("v1", new OpenApiInfo { Title = "CompanyPriceTrackerAPI", Version = "v1" });
+    option.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme { 
+        In = ParameterLocation.Header,
+        Description = "Please enter a valid token",
+        Name = "Authorization",
+        Type = SecuritySchemeType.Http,
+        BearerFormat = "JWT",
+        Scheme = "Bearer"
+    });
+    option.AddSecurityRequirement(new OpenApiSecurityRequirement {
+        {
+            new OpenApiSecurityScheme {
+                Reference = new OpenApiReference {
+                    Type=ReferenceType.SecurityScheme,
+                    Id="Bearer"
+                }
+            },
+            new string[]{}
+        }
+    });
+});
+
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options => {
+        options.TokenValidationParameters = new TokenValidationParameters {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = builder.Configuration["Jwt:Issuer"],
+            ValidAudience = builder.Configuration["Jwt:Audience"],
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!))
+        };
+    });
+
+builder.Services.AddAuthorization(options => {
+    options.AddPolicy("AdminOnly", policy => policy.RequireRole("Admin"));
+    options.AddPolicy("UserOnly", policy => policy.RequireRole("User"));
+});
 
 builder.Services.AddCors(options => {
     options.AddDefaultPolicy(
@@ -31,9 +81,6 @@ builder.Services.AddCors(options => {
         });
 });
 
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer
-
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -43,6 +90,10 @@ if (app.Environment.IsDevelopment()) {
 }
 
 app.UseHttpsRedirection();
+app.UseCors();
+
+app.UseAuthentication();
+app.UseAuthorization();
 
 /// <summary>
 /// Yeni Sirket Oluþturma
@@ -53,11 +104,11 @@ app.UseHttpsRedirection();
 /// Olusturulan sirketin detaylarýný içeren bir HTTP 201 Created yanýtý
 /// Basarisiz durumda HTTP 400 Bad Request ve hata mesajlari
 /// </returns>
-app.MapPost("/api/companies", async (
+app.MapPost("/api/companies", [Authorize(Roles = "User, Admin")] async (
     [FromBody] CompanyCreateWithDetailsDTO companyDTO, ICompanyService companyService) => {
         var result = await companyService.CreateCompanyAsync(companyDTO);
         if (result.IsSuccess) {
-            return Results.CreatedAtRoute("GetCompanyById", new { id = result.Data!.Id }, result.Data);
+            return Results.Created("/api/companies/" + result.Data!.Id, result.Data);
         } else {
             return Results.BadRequest(result.Errors);
         }
@@ -74,7 +125,7 @@ app.MapPost("/api/companies", async (
 /// Belirtilen ID'ye sahip sirketin detaylarini iceren bir HTTP 200 OK yaniti
 /// Gecersiz istek durumunda HTTP 400 Bad Request ve hata mesajlari 
 /// </returns>
-app.MapGet("api/companies/{id}", async (
+app.MapGet("api/companies/{id}", [Authorize(Roles = "User, Admin")] async (
     [FromRoute] string id, ICompanyService companyService) => {
         var result = await companyService.GetCompanyByIdAsync(id);
         if (result.IsSuccess && result.Data != null) {
@@ -116,7 +167,7 @@ app.MapGet("api/companies", async (
 /// Olusturulan sirket fiyatinin detaylarini icrene bir HTTP 201 Created yaniti
 /// Basarisiz durumda HTTP 400 Bad Request ve hata mesajlari
 /// </returns>
-app.MapPost("/api/companyprices", async (
+app.MapPost("/api/companyprices", [Authorize(Roles = "User, Admin")] async (
     [FromBody] CompanyPriceCreateDTO companyPriceDTO, ICompanyPriceService companyPriceService) => {
         var result = await companyPriceService.AddCompanyPriceAsync(companyPriceDTO);
         if(result.IsSuccess) {
@@ -126,7 +177,6 @@ app.MapPost("/api/companyprices", async (
     })
     .WithName("AddCompanyPrice")
     .WithOpenApi();
-
 
 /// <summary>
 /// Teklif Hesaplama
@@ -139,6 +189,7 @@ app.MapPost("/api/companyprices", async (
 /// </returns>
 app.MapPost("/api/offers/calculate", async (
     [FromBody] OfferRequestDTO requestDTO, ICompanyPriceService companyPriceService) => {
+        Console.WriteLine($"DTO: companyId={requestDTO.CompanyId}, startDate={requestDTO.StartDate.ToShortDateString()}, endDate={requestDTO.EndDate.ToShortDateString()}");
         var result = await companyPriceService.CalculateOfferAsync(requestDTO);
 
         if (result.IsSuccess) {
@@ -147,7 +198,43 @@ app.MapPost("/api/offers/calculate", async (
         return Results.BadRequest(result.Errors);
     })
     .WithName("CalculateOffer")
-    .WithOpenApi(); 
+    .WithOpenApi();
+
+/// <summary>
+/// Yeni kullanýcý kaydý yapar. (Sadece Admin)
+/// </summary>
+/// <param name="request">Kullanýcý kayýt bilgileri</param>
+/// <param name="authService">Auth servisi</param>
+/// <returns>Kayýt baþarýlý olursa token ve kullanýcý bilgileri</returns>
+app.MapPost("/api/auth/register", [Authorize(Roles = "Admin")] async ( // Sadece Adminler yeni kullanýcý kaydedebilir
+    [FromBody] UserRegisterDTO request, IAuthenticationService authService) => {
+        var result = await authService.RegisterAsync(request);
+        if(result.IsSuccess) {
+            return Results.Ok(result.Data);
+        }
+        return Results.BadRequest(result.Errors);
+    })
+    .AddEndpointFilter<ValidationFilter<UserRegisterDTO>>()
+    .WithName("RegisterUser")
+    .WithOpenApi();
+
+/// <summary>
+/// Kullanýcý giriþi yapar ve JWT token döndürür.
+/// </summary>
+/// <param name="request">Kullanýcý giriþ bilgileri</param>
+/// <param name="authService">Auth servisi</param>
+/// <returns>Baþarýlý giriþ olursa token ve kullanýcý bilgileri</returns>
+app.MapPost("/api/auth/login", async ( // Herkes giriþ yapabilir (Authorize deðil)
+    [FromBody] LoginRequestDTO request, IAuthenticationService authService) => { // IAuthenticationService
+        var result = await authService.LoginAsync(request);
+        if (result.IsSuccess) {
+            return Results.Ok(result.Data);
+        }
+        return Results.Unauthorized(); // Baþarýsýz olursa Unauthorized döndür
+    })
+    .AddEndpointFilter<ValidationFilter<LoginRequestDTO>>()
+    .WithName("LoginUser")
+    .WithOpenApi();
 
 app.Run();
 

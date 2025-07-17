@@ -32,17 +32,18 @@ namespace CompanyPriceTracker.Infrastructure.Services {
                 await _companyRepository.AddAsync(company); // domain entity'si repository aracılığı ile veritabanına eklenir
                 isNewCompany = true;
             } else {
-                Console.WriteLine("Company " + company.Name + " already exists with ID: " + company.Id + ". Adding new price to existing company.");
+                Console.WriteLine("Company " + company.Name + " already exists with ID: " + company.Id + ".");
             }
-            var companyPriceWithYearAndPrice = new CompanyPriceCreateDTO {
+            var companyPriceWithYear = new CompanyPriceCreateDTO {
                 CompanyId = company.Id!,
                 Year = companyDTO.Year,
                 Price = companyDTO.Price
             }; // AutoMapper ile nasıl yapılır?
-            //var companyPriceWithYearAndPrice = _mapper.Map<CompanyPriceCreateDTO>(companyDTO);
-            //companyPriceWithYearAndPrice.CompanyId = company.Id!;
-            var createdPriceResponse = await _companyPriceService.AddCompanyPriceAsync(companyPriceWithYearAndPrice);
+            //var companyPriceWithYear = _mapper.Map<CompanyPriceCreateDTO>(companyDTO);
+            //companyPriceWithYear.CompanyId = company.Id!;
+            var createdPriceResponse = await _companyPriceService.AddCompanyPriceAsync(companyPriceWithYear);
             if(!createdPriceResponse.IsSuccess) {
+                Console.WriteLine("Company created but price addition failed.");
                 return ServiceResult<CompanyResponseWithDetailsDTO>.Failure(message: "Company created but price addition failed.", errors: createdPriceResponse.Errors);
             }
             var responseDto = _mapper.Map<CompanyResponseWithDetailsDTO>(company); // Company Entity -> CompanyResponseWithDetailsDTO Mapping

@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 namespace CompanyPriceTracker.Application.DTOs.Offer {
     public class OfferRequestDTO {
         public string CompanyId { get; set; } = null!; // teklif alınacak firmanın benzersiz ID'si
-        public int ExpertDayCount { get; set; }        // ihtiyaç duyulan uzman/gün sayısı 
+        public DateTime StartDate { get; set; }
+        public DateTime EndDate { get; set; }
     }
 }
