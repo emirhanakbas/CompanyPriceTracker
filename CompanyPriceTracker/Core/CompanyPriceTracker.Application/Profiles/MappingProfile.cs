@@ -9,6 +9,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using CompanyPriceTracker.Application.DTOs.Offer;
+using CompanyPriceTracker.Application.DTOs.Authentication;
 
 namespace CompanyPriceTracker.Application.Profiles {
     public class MappingProfile : Profile { // AutoMapper Profile Class'ı
@@ -24,6 +25,7 @@ namespace CompanyPriceTracker.Application.Profiles {
             // Diğer DTO Mapping'leri
             //CreateMap<OfferRequestDTO, ...>();
             //CreateMap<..., OfferResponseDTO >();
+            CreateMap<UserRegisterDTO, User>();
         }
     }
 }

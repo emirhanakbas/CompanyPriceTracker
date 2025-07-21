@@ -108,7 +108,7 @@ app.MapPost("/api/companies", [Authorize(Roles = "User, Admin")] async (
     [FromBody] CompanyCreateWithDetailsDTO companyDTO, ICompanyService companyService) => {
         var result = await companyService.CreateCompanyAsync(companyDTO);
         if (result.IsSuccess) {
-            return Results.Created("/api/companies/" + result.Data!.Id, result.Data);
+            return Results.Created("/api/companies/" + result.Data!.Id, result);
         } else {
             return Results.BadRequest(result.Errors);
         }
@@ -129,7 +129,7 @@ app.MapGet("api/companies/{id}", [Authorize(Roles = "User, Admin")] async (
     [FromRoute] string id, ICompanyService companyService) => {
         var result = await companyService.GetCompanyByIdAsync(id);
         if (result.IsSuccess && result.Data != null) {
-            return Results.Ok(result.Data);
+            return Results.Ok(result);
         } else if (result.IsSuccess && result.Data == null) {
             return Results.NotFound(result.Errors);
         } else {
@@ -151,7 +151,7 @@ app.MapGet("api/companies", async (
     ICompanyService companyService) => {
         var result = await companyService.GetAllCompaniesAsync();
         if(result.IsSuccess) {
-            return Results.Ok(result.Data);
+            return Results.Ok(result);
         }
         return Results.NotFound(result.Errors);
     })
@@ -171,7 +171,7 @@ app.MapPost("/api/companyprices", [Authorize(Roles = "User, Admin")] async (
     [FromBody] CompanyPriceCreateDTO companyPriceDTO, ICompanyPriceService companyPriceService) => {
         var result = await companyPriceService.AddCompanyPriceAsync(companyPriceDTO);
         if(result.IsSuccess) {
-            return Results.Created("/api/companyprices/" + result.Data!.Id, result.Data);
+            return Results.Created("/api/companyprices/" + result.Data!.Id, result);
         }
         return Results.BadRequest(result.Errors);
     })
@@ -193,7 +193,7 @@ app.MapPost("/api/offers/calculate", async (
         var result = await companyPriceService.CalculateOfferAsync(requestDTO);
 
         if (result.IsSuccess) {
-            return Results.Ok(result.Data);
+            return Results.Ok(result);
         }
         return Results.BadRequest(result.Errors);
     })
@@ -201,7 +201,7 @@ app.MapPost("/api/offers/calculate", async (
     .WithOpenApi();
 
 /// <summary>
-/// Yeni kullanýcý kaydý yapar. (Sadece Admin)
+/// Yeni kullanýcý kaydý yapar (Sadece Admin)
 /// </summary>
 /// <param name="request">Kullanýcý kayýt bilgileri</param>
 /// <param name="authService">Auth servisi</param>
@@ -210,7 +210,7 @@ app.MapPost("/api/auth/register", [Authorize(Roles = "Admin")] async ( // Sadece
     [FromBody] UserRegisterDTO request, IAuthenticationService authService) => {
         var result = await authService.RegisterAsync(request);
         if(result.IsSuccess) {
-            return Results.Ok(result.Data);
+            return Results.Ok(result);
         }
         return Results.BadRequest(result.Errors);
     })
@@ -219,18 +219,18 @@ app.MapPost("/api/auth/register", [Authorize(Roles = "Admin")] async ( // Sadece
     .WithOpenApi();
 
 /// <summary>
-/// Kullanýcý giriþi yapar ve JWT token döndürür.
+/// Kullanici girisi yapar ve JWT token döndürür
 /// </summary>
-/// <param name="request">Kullanýcý giriþ bilgileri</param>
+/// <param name="request">Kullanici giris bilgileri</param>
 /// <param name="authService">Auth servisi</param>
-/// <returns>Baþarýlý giriþ olursa token ve kullanýcý bilgileri</returns>
-app.MapPost("/api/auth/login", async ( // Herkes giriþ yapabilir (Authorize deðil)
+/// <returns>Basarili giris olursa token ve kullanici bilgileri</returns>
+app.MapPost("/api/auth/login", async ( // Herkes giris yapabilir (Authorize deðil)
     [FromBody] LoginRequestDTO request, IAuthenticationService authService) => { // IAuthenticationService
         var result = await authService.LoginAsync(request);
         if (result.IsSuccess) {
-            return Results.Ok(result.Data);
+            return Results.Ok(result);
         }
-        return Results.Unauthorized(); // Baþarýsýz olursa Unauthorized döndür
+        return Results.Unauthorized(); // Basarisiz olursa Unauthorized döner
     })
     .AddEndpointFilter<ValidationFilter<LoginRequestDTO>>()
     .WithName("LoginUser")

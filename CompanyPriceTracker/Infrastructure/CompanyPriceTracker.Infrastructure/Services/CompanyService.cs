@@ -18,7 +18,7 @@ namespace CompanyPriceTracker.Infrastructure.Services {
         private readonly ICompanyPriceService _companyPriceService;
         private readonly IMapper _mapper; // IMapper Injection
 
-        public CompanyService(ICompanyRepository companyRepository, ICompanyPriceService companyPriceService, IMapper mapper) { // DEPENDENCY INVERSION
+        public CompanyService(ICompanyRepository companyRepository, ICompanyPriceService companyPriceService, IMapper mapper) { // Dependency Injection Constructor Metod
             _companyRepository = companyRepository;
             _companyPriceService = companyPriceService;
             _mapper = mapper;
@@ -55,7 +55,7 @@ namespace CompanyPriceTracker.Infrastructure.Services {
             if(createdPriceResponse.Data != null) {
                 responseDto.Prices.Add(createdPriceResponse.Data);
             }
-            string successMessage = isNewCompany ? "New company and initial price created successfully." : "Price added to existing company successfully.";
+            string successMessage = isNewCompany ? "Yeni firma ve fiyatı sisteme başarıyla eklendi." : "Mevcut firmaya ait fiyat bilgisi eklendi.";
             return ServiceResult<CompanyResponseWithDetailsDTO>.Success(responseDto, successMessage);
         }
 

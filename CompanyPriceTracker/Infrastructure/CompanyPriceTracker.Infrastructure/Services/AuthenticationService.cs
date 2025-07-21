@@ -18,11 +18,13 @@ using CompanyPriceTracker.Application.Abstractions.Services;
 namespace CompanyPriceTracker.Infrastructure.Services {
     public class AuthenticationService : IAuthenticationService{
         private readonly IUserRepository _userRepository;
-        private readonly IConfiguration _configuration;    
+        private readonly IConfiguration _configuration;
+        private readonly IMapper _mapper;
         
-        public AuthenticationService(IUserRepository userRepository, IConfiguration configuration) {
+        public AuthenticationService(IUserRepository userRepository, IConfiguration configuration, IMapper mapper) {
             _userRepository = userRepository;
             _configuration = configuration;
+            _mapper = mapper;
         }
 
         private string GenerateJwtToken(User user) {
@@ -50,14 +52,16 @@ namespace CompanyPriceTracker.Infrastructure.Services {
         public async Task<ServiceResult<LoginResponseDTO>> RegisterAsync(UserRegisterDTO request) {
             var existingUser = await _userRepository.GetByUsernameAsync(request.Username);
             if(existingUser != null) {
-                return ServiceResult<LoginResponseDTO>.Failure(error: "Username already exists.", message: "User with this username already registered.");
+                return ServiceResult<LoginResponseDTO>.Failure(error: "Username already exists.", message: "Bu kullanıcı adı ile kullanıcı bulunmaktadır.");
             }
             string passwordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);
-            var user = new User {
-                Username = request.Username,
-                PasswordHash = passwordHash,
-                Roles = request.Roles ?? new List<string> { "User" } // null ise sag taraftaki ifadeyi kullan
-            };
+            var user = _mapper.Map<User>(request);
+            user.PasswordHash = passwordHash;
+            //var user = new User {
+            //    Username = request.Username,
+            //    PasswordHash = passwordHash,
+            //    Roles = request.Roles ?? new List<string> { "Unauthorized" } // null ise sag taraftaki ifadeyi kullan
+            //};
             await _userRepository.AddSync(user);
             var token = GenerateJwtToken(user);
             return ServiceResult<LoginResponseDTO>.Success(new LoginResponseDTO { 
