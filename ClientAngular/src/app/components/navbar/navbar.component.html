@@ -1,0 +1,41 @@
+<nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm mb-4">
+    <div class="container">
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMain" aria-controls="navbarMain" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse justify-content-end" id="navbarMain">
+            <ul class="navbar-nav align-items-center ms-auto">
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" role="button"
+                       data-bs-toggle="dropdown" aria-expanded="false">
+                        İşlemler
+                    </a>
+                    <ul class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
+                        <li>
+                            <a class="dropdown-item" routerLink="/">Teklif Al</a>
+                        </li>
+                        <ng-container *ngIf="userRole === 'Admin'">
+                            <li>
+                                <a class="dropdown-item" routerLink="/add-company">Firma Ekle</a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" routerLink="/admin-register">Firma Yetkilisi Kaydet</a>
+                            </li>
+                        </ng-container>
+                        <ng-container *ngIf="userRole === 'User'">
+                            <li>
+                                <a class="dropdown-item" routerLink="/add-company">Firma Ekle</a>
+                            </li>
+                        </ng-container>
+                    </ul>
+                </li>
+
+                <li class="nav-item ms-3">
+                    <a *ngIf="!isLoggedIn" class="btn btn-outline-primary px-4" routerLink="/login">Giriş Yap</a>
+                    <a *ngIf="isLoggedIn" class="btn btn-outline-danger px-4" (click)="logout()" style="cursor:pointer;">Çıkış Yap</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>

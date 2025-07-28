@@ -11,6 +11,8 @@ using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Serilog;
+using Serilog.Sinks.Graylog;
 
 namespace CompanyPriceTracker.Infrastructure.Services {
     public class CompanyService : ICompanyService{
@@ -31,8 +33,10 @@ namespace CompanyPriceTracker.Infrastructure.Services {
                 company = _mapper.Map<Company>(companyDTO); // companyDTO -> CompanyEntity Mapping
                 await _companyRepository.AddAsync(company); // domain entity'si repository aracılığı ile veritabanına eklenir
                 isNewCompany = true;
+                Log.Information("Yeni şirket oluşturuldu: {@Company}", company);
             } else {
                 Console.WriteLine("Company " + company.Name + " already exists with ID: " + company.Id + ".");
+                Log.Warning("Zaten mevcut olan bir şirkete kayıt yapılmaya çalışıldı. Ad: {CompanyName}, ID: {CompanyId}", company.Name, company.Id);
             }
             var companyPriceWithYear = new CompanyPriceCreateDTO {
                 CompanyId = company.Id!,
@@ -44,7 +48,8 @@ namespace CompanyPriceTracker.Infrastructure.Services {
             var createdPriceResponse = await _companyPriceService.AddCompanyPriceAsync(companyPriceWithYear);
             if(!createdPriceResponse.IsSuccess) {
                 Console.WriteLine("Company created but price addition failed.");
-                return ServiceResult<CompanyResponseWithDetailsDTO>.Failure(message: "Company created but price addition failed.", errors: createdPriceResponse.Errors);
+                Log.Error("Firma oluşturuldu fakat fiyat bilgisi eklenemedi. Şirket: {CompanyId}, Hatalar: {@Errors}", company.Id, createdPriceResponse.Errors);
+                return ServiceResult<CompanyResponseWithDetailsDTO>.Failure(message: createdPriceResponse.Message, errors: createdPriceResponse.Errors);
             }
             var responseDto = _mapper.Map<CompanyResponseWithDetailsDTO>(company); // Company Entity -> CompanyResponseWithDetailsDTO Mapping
             /*var responseDto = new CompanyResponseWithDetailsDTO { // Manuel Map
@@ -56,6 +61,7 @@ namespace CompanyPriceTracker.Infrastructure.Services {
                 responseDto.Prices.Add(createdPriceResponse.Data);
             }
             string successMessage = isNewCompany ? "Yeni firma ve fiyatı sisteme başarıyla eklendi." : "Mevcut firmaya ait fiyat bilgisi eklendi.";
+            Log.Information("Firma işlemi başarılı. Yeni mi?: {IsNew}, FirmaID: {CompanyId}, Yıl: {Year}, Fiyat: {Price}", isNewCompany, company.Id, companyDTO.Year, companyDTO.Price);
             return ServiceResult<CompanyResponseWithDetailsDTO>.Success(responseDto, successMessage);
         }
 
@@ -77,18 +83,18 @@ namespace CompanyPriceTracker.Infrastructure.Services {
                 Id = company.Id,
                 Name = company.Name
             });*/
-            return ServiceResult<IEnumerable<CompanyResponseWithDetailsDTO>>.Success(responseDTOs, "All companies retrieved successfully.");
+            return ServiceResult<IEnumerable<CompanyResponseWithDetailsDTO>>.Success(responseDTOs, "Tüm şirketler başarıyla getirildi.");
         }
 
         public async Task<ServiceResult<CompanyResponseWithDetailsDTO?>> GetCompanyByIdAsync(string id) {
             var company = await _companyRepository.GetByIdAsync(id); // repository'den id ile çekiliyor
             if(company == null) {
-                return ServiceResult<CompanyResponseWithDetailsDTO?>.Failure($"Company with ID {id} not found.", "Company not found.");
+                return ServiceResult<CompanyResponseWithDetailsDTO?>.Failure($"Company with ID {id} not found.", "Şirket bulunamadı.");
             }
 
             var prices = await _companyPriceService.GetCompanyPricesAsync(company.Id!);
             if(!prices.IsSuccess) {
-                return ServiceResult<CompanyResponseWithDetailsDTO?>.Failure(message: "Company found but failed to retrieve prices.", errors: prices.Errors);
+                return ServiceResult<CompanyResponseWithDetailsDTO?>.Failure(message: "Şirket bulundu ancak fiyatlar getirilemedi.", errors: prices.Errors);
             }
 
             var responseDto = _mapper.Map<CompanyResponseWithDetailsDTO>(company); // Company Entity -> CompanyResponseWithDetailsDTO Mapping
@@ -102,7 +108,7 @@ namespace CompanyPriceTracker.Infrastructure.Services {
             } else {
                 responseDto.Prices = new List<CompanyPriceResponseDTO>(); 
             }
-            return ServiceResult<CompanyResponseWithDetailsDTO?>.Success(responseDto, message: "Company details retrieved successfully.");
+            return ServiceResult<CompanyResponseWithDetailsDTO?>.Success(responseDto, message: "Şirket detayları başarıyla getirildi.");
         }
     }
 }

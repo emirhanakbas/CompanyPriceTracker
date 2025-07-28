@@ -17,10 +17,23 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Text;
+using Serilog;
+using Serilog.Sinks.Graylog;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddValidatorsFromAssemblyContaining<LoginRequestValidator>(); // Ýçinde bulunduðu assembly'deki tüm validator'larý çeker
+Log.Logger = new LoggerConfiguration()
+    .MinimumLevel.Debug()
+    .WriteTo.Graylog(new GraylogSinkOptions {
+        HostnameOrAddress = "graylog", // docker container adý, dev. ortamý ise "localhost", yoksa "graylog"
+        Port = 12201,                  // graylog GELF UDP input portu
+        Facility = "CompanyPriceTracker"
+    })
+    .CreateLogger();
+
+builder.Host.UseSerilog();
+
+builder.Services.AddValidatorsFromAssemblyContaining<LoginRequestValidator>(); // icinde bulundugu assembly'deki tüm validator'lari alir
 builder.Services.Configure<MongoDbSettings>(builder.Configuration.GetSection("MongoDbSettings"));
 builder.Services.AddSingleton<ICompanyRepository, CompanyRepository>();
 builder.Services.AddSingleton<ICompanyPriceRepository, CompanyPriceRepository>();
@@ -84,24 +97,27 @@ builder.Services.AddCors(options => {
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment()) {
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+app.UseSwagger();
+app.UseSwaggerUI();
 
-app.UseHttpsRedirection();
+//app.UseHttpsRedirection();
 app.UseCors();
 
 app.UseAuthentication();
 app.UseAuthorization();
 
+app.Use(async (context, next) => {
+    Console.WriteLine($"[REQUEST] {context.Request.Method} {context.Request.Path}");
+    await next.Invoke();
+});
+
 /// <summary>
-/// Yeni Sirket Oluþturma
+/// Yeni Sirket Olusturma
 /// </summary>
 /// <param name="companyDTO">Sirket bilgileri</param>
 /// <param name="companyService">Sirket islemleri servisi</param>
 /// <returns>
-/// Olusturulan sirketin detaylarýný içeren bir HTTP 201 Created yanýtý
+/// Olusturulan sirketin detaylarini iceren bir HTTP 201 Created yaniti
 /// Basarisiz durumda HTTP 400 Bad Request ve hata mesajlari
 /// </returns>
 app.MapPost("/api/companies", [Authorize(Roles = "User, Admin")] async (
@@ -110,7 +126,7 @@ app.MapPost("/api/companies", [Authorize(Roles = "User, Admin")] async (
         if (result.IsSuccess) {
             return Results.Created("/api/companies/" + result.Data!.Id, result);
         } else {
-            return Results.BadRequest(result.Errors);
+            return Results.BadRequest(result);
         }
     })
     .WithName("CreateCompany")
@@ -131,9 +147,9 @@ app.MapGet("api/companies/{id}", [Authorize(Roles = "User, Admin")] async (
         if (result.IsSuccess && result.Data != null) {
             return Results.Ok(result);
         } else if (result.IsSuccess && result.Data == null) {
-            return Results.NotFound(result.Errors);
+            return Results.NotFound(result);
         } else {
-            return Results.BadRequest(result.Errors);
+            return Results.BadRequest(result);
         }
     })
     .WithName("GetCompanyById")
@@ -153,7 +169,7 @@ app.MapGet("api/companies", async (
         if(result.IsSuccess) {
             return Results.Ok(result);
         }
-        return Results.NotFound(result.Errors);
+        return Results.NotFound(result);
     })
     .WithName("GetAllCompanies")
     .WithOpenApi();
@@ -173,7 +189,7 @@ app.MapPost("/api/companyprices", [Authorize(Roles = "User, Admin")] async (
         if(result.IsSuccess) {
             return Results.Created("/api/companyprices/" + result.Data!.Id, result);
         }
-        return Results.BadRequest(result.Errors);
+        return Results.BadRequest(result);
     })
     .WithName("AddCompanyPrice")
     .WithOpenApi();
@@ -195,7 +211,7 @@ app.MapPost("/api/offers/calculate", async (
         if (result.IsSuccess) {
             return Results.Ok(result);
         }
-        return Results.BadRequest(result.Errors);
+        return Results.BadRequest(result);
     })
     .WithName("CalculateOffer")
     .WithOpenApi();
@@ -212,7 +228,7 @@ app.MapPost("/api/auth/register", [Authorize(Roles = "Admin")] async ( // Sadece
         if(result.IsSuccess) {
             return Results.Ok(result);
         }
-        return Results.BadRequest(result.Errors);
+        return Results.BadRequest(result);
     })
     .AddEndpointFilter<ValidationFilter<UserRegisterDTO>>()
     .WithName("RegisterUser")
@@ -230,7 +246,7 @@ app.MapPost("/api/auth/login", async ( // Herkes giris yapabilir (Authorize deði
         if (result.IsSuccess) {
             return Results.Ok(result);
         }
-        return Results.Unauthorized(); // Basarisiz olursa Unauthorized döner
+        return Results.BadRequest(result); // Basarisiz olursa BadRequest döner
     })
     .AddEndpointFilter<ValidationFilter<LoginRequestDTO>>()
     .WithName("LoginUser")

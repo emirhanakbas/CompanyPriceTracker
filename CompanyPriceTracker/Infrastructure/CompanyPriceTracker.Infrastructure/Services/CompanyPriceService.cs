@@ -28,13 +28,12 @@ namespace CompanyPriceTracker.Infrastructure.Services {
             var existingCompany = await _companyRepository.GetByIdAsync(companyPriceDto.CompanyId!);
             if(existingCompany == null) { // fiyat eklenecek firmanın var olup olmadığını kontrol etme, ileriki geliştirme süreci için
                                           // var olan bir firmaya yeni bir fiyat ataması yapmak için
-                return ServiceResult<CompanyPriceResponseDTO>.Failure(error: "Company with ID " + companyPriceDto.CompanyId + " not found.", message: "Company not found for price addition.");
+                return ServiceResult<CompanyPriceResponseDTO>.Failure(error: "Company with ID " + companyPriceDto.CompanyId + " not found.", message: "Fiyat eklemesi için şirket bulunamadı.");
                 //throw new ArgumentException($"Company with ID {companyPriceDTO.CompanyId} not found.");
             }
             var existingPrice = await _companyPriceRepository.GetPriceByCompanyAndYearAsync(companyPriceDto.CompanyId!, companyPriceDto.Year);
             if(existingPrice != null) { // eklenecek fiyatın yıl ve firmaya göre kontrolü
-                Console.WriteLine("Company price for company ID: '" + companyPriceDto.CompanyId + "' and Year: '" + companyPriceDto.Year + "' already exits.");
-                return ServiceResult<CompanyPriceResponseDTO>.Failure(error: "Company price for company ID: '" + companyPriceDto.CompanyId + "' and Year: '" + companyPriceDto.Year + "' already exits.");
+                return ServiceResult<CompanyPriceResponseDTO>.Failure(error: "Company price for company ID: '" + companyPriceDto.CompanyId + "' and Year: '" + companyPriceDto.Year + "' already exits.", message: "Belirtilen şirket ve yıla ait fiyat bilgisi bulunmaktadır.");
                 //throw new InvalidOperationException($"Company price for company ID {companyPriceDTO.CompanyId} and year {companyPriceDTO.Year} already exits.");
             }
             var companyPrice = _mapper.Map<CompanyPrice>(companyPriceDto); // AutoMapper
@@ -51,8 +50,7 @@ namespace CompanyPriceTracker.Infrastructure.Services {
             //    Year = companyPrice.Year,
             //    Price = companyPrice.Price
             //};
-            Console.WriteLine("Company price added successfully.");
-            return ServiceResult<CompanyPriceResponseDTO>.Success(responseDTO, "Company price added successfully.");
+            return ServiceResult<CompanyPriceResponseDTO>.Success(responseDTO, "Şirket fiyatı başarıyla eklendi.");
         }
 
         public async Task<ServiceResult<OfferResponseDTO>> CalculateOfferAsync(OfferRequestDTO offerRequestDTO) {
@@ -66,15 +64,15 @@ namespace CompanyPriceTracker.Infrastructure.Services {
                 }
             }
             if(expertDayCount == 0) {
-                return ServiceResult<OfferResponseDTO>.Failure(error: "No weekdays found in the selected range.", message: "Seçilen tarih aralığında hesaplanacak hafta içi günü bulunmamaktadır. Lütfen haftaiçi günleri içeren bir aralık seçin.");
+                return ServiceResult<OfferResponseDTO>.Failure(error: "No weekdays found in the selected range.", message: "Seçilen tarih aralığında hesaplanacak hafta içi günü bulunmamaktadır. Lütfen hafta içi günleri içeren bir aralık seçin.");
             }
             var company = await _companyRepository.GetByIdAsync(offerRequestDTO.CompanyId);
             if(company == null) {
-                return ServiceResult<OfferResponseDTO>.Failure(error: "Company with ID " + offerRequestDTO.CompanyId + " not found.", message: "Company not found for offer calculation.");
+                return ServiceResult<OfferResponseDTO>.Failure(error: "Company with ID " + offerRequestDTO.CompanyId + " not found.", message: "Teklif hesaplaması için şirket bulunamadı.");
             }
             var companyPrice = await _companyPriceRepository.GetLatestPriceByCompanyIdAsync(offerRequestDTO.CompanyId);
             if (companyPrice == null) {
-                return ServiceResult<OfferResponseDTO>.Failure(error: "No price found for company.", message: "No price found for offer calculation.");
+                return ServiceResult<OfferResponseDTO>.Failure(error: "No price found for company.", message: "Teklif hesaplaması için fiyat bulunamadı.");
             }
             double unitPrice = (double)companyPrice.Price;
             double totalPrice = unitPrice * expertDayCount;
@@ -86,16 +84,16 @@ namespace CompanyPriceTracker.Infrastructure.Services {
                 TotalPrice = totalPrice,
                 Currency = "₺"
             };
-            return ServiceResult<OfferResponseDTO>.Success(responseDto, message: "Offer calculated successfully.");
+            return ServiceResult<OfferResponseDTO>.Success(responseDto, message: "Teklif başarıyla hesaplandı.");
         }
 
         public async Task<ServiceResult<IEnumerable<CompanyPriceResponseDTO>>> GetCompanyPricesAsync(string companyId) {
             var companyPrices = await _companyPriceRepository.GetPricesByCompanyIdAsync(companyId);
             if(companyPrices == null || !companyPrices.Any()) {
-                return ServiceResult<IEnumerable<CompanyPriceResponseDTO>>.Failure(error: "No prices found for company ID " + companyId + ".", message: "Company prices not found.");
+                return ServiceResult<IEnumerable<CompanyPriceResponseDTO>>.Failure(error: "No prices found for company ID " + companyId + ".", message: "Şirket fiyatı bulunmamaktadır.");
             }
             var responseDtos = _mapper.Map<IEnumerable<CompanyPriceResponseDTO>>(companyPrices);
-            return ServiceResult<IEnumerable<CompanyPriceResponseDTO>>.Success(responseDtos, "Company prices retrieved successfully.");
+            return ServiceResult<IEnumerable<CompanyPriceResponseDTO>>.Success(responseDtos, "Şirket fiyatları başarıyla alındı.");
         }
     }
 }

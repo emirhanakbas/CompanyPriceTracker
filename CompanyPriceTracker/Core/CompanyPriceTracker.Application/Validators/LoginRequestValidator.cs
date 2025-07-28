@@ -10,9 +10,9 @@ namespace CompanyPriceTracker.Application.Validators {
     public class LoginRequestValidator : AbstractValidator<LoginRequestDTO> {
         public LoginRequestValidator() {
             RuleFor(x => x.Username)
-                .NotEmpty().WithMessage("Username is required.");
+                .NotEmpty().WithMessage("Kullanıcı adı zorunludur.");
             RuleFor(x => x.Password)
-                .NotEmpty().WithMessage("Password is required.");
+                .NotEmpty().WithMessage("Şifre zorunludur.");
         }
     }
 }

@@ -10,15 +10,15 @@ namespace CompanyPriceTracker.Application.Validators {
     public class UserRegisterValidator : AbstractValidator<UserRegisterDTO> {
         public UserRegisterValidator() {
             RuleFor(x => x.Username)
-                .NotEmpty().WithMessage("Username is required.")
-                .MinimumLength(3).WithMessage("Username must be at least 3 characters.")
-                .MaximumLength(20).WithMessage("Username must not exceed 20 characters.")
-                .Matches("^[a-zA-Z0-9_]+$").WithMessage("Username can only contain letters, numbers, and underscores.");
+                .NotEmpty().WithMessage("Kullanıcı adı zorunludur.")
+                .MinimumLength(3).WithMessage("Kullanıcı adı en az 3 karakter olmalıdır.")
+                .MaximumLength(20).WithMessage("Kullanıcı adı 20 karakteri geçemez.")
+                .Matches("^[a-zA-Z0-9_]+$").WithMessage("Kullanıcı adı sadece harf, rakam ve alt çizgi içerebilir.");
             RuleFor(x => x.Password)
-                .NotEmpty().WithMessage("Password is required.")
-                .Matches(@"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{6,100}$").WithMessage("Password must be 6–100 characters long and include uppercase, lowercase, number, and special character.");
+                .NotEmpty().WithMessage("Şifre zorunludur.")
+                .Matches(@"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{6,100}$").WithMessage("Şifre, 6-100 karakter uzunluğunda olmalı ve büyük harf, küçük harf, rakam ve özel karakter içermelidir.");
             RuleFor(x => x.Roles)
-            .NotEmpty().WithMessage("At least one role is required.");
+            .NotEmpty().WithMessage("En az bir rol zorunludur.");
         }
     }
 }

@@ -68,23 +68,23 @@ namespace CompanyPriceTracker.Infrastructure.Services {
                 Token = token, 
                 Username = user.Username, 
                 Roles = user.Roles 
-            }, "User registered successfully.");
+            }, "Kullanıcı başarıyla kaydedildi.");
         }
 
         public async Task<ServiceResult<LoginResponseDTO>> LoginAsync(LoginRequestDTO request) {
             var user = await _userRepository.GetByUsernameAsync(request.Username);
             if(user == null) {
-                return ServiceResult<LoginResponseDTO>.Failure(error: "Invalid credentials.", message: "User not found or invalid username/password.");
+                return ServiceResult<LoginResponseDTO>.Failure(error: "Invalid credentials.", message: "Kullanıcı bulunamadı veya kullanıcı adı/şifre geçersiz.");
             }
             if(!BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash)) {
-                return ServiceResult<LoginResponseDTO>.Failure(error: "Invalid credentials.", message: "Invalid username/password.");
+                return ServiceResult<LoginResponseDTO>.Failure(error: "Invalid credentials.", message: "Geçersiz kullanıcı adı veya şifre.");
             }
             var token = GenerateJwtToken(user);
             return ServiceResult<LoginResponseDTO>.Success(new LoginResponseDTO {
                 Token = token,
                 Username = user.Username,
                 Roles = user.Roles
-            }, "Login successfull.");
+            }, "Giriş başarılı.");
         }
     }
 }

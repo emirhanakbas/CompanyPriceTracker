@@ -17,6 +17,8 @@ namespace CompanyPriceTracker.Persistence.Repositories {
             var client = new MongoClient(settings.Value.ConnectionString);
             var database = client.GetDatabase(settings.Value.DatabaseName);
             _usersCollection = database.GetCollection<User>("users");       // users adında bir koleksiyon
+            Console.WriteLine("MongoDB Connection String:");
+            Console.WriteLine(settings.Value.ConnectionString);
         }
 
         public async Task AddSync(User user) {

@@ -1,0 +1,22 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./CompanyPriceTracker
+      dockerfile: Dockerfile
+    container_name: project-api
+    ports:
+      - "5000:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT}
+      - MongoDbSettings__ConnectionString=${MongoDbSettings__ConnectionString}
+      - MongoDbSettings__DatabaseName=${MongoDbSettings__DatabaseName}
+      - Jwt__Key=${Jwt__Key}
+    networks:
+      - project-net
+
+networks:
+  project-net:
+    external: true
+    name: project-net

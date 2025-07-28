@@ -1,0 +1,51 @@
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6 col-lg-5">
+            <div class="card shadow-sm rounded-4">
+                <div class="card-body">
+                    <h2 class="mb-4 text-center">Firma Yetkilisi Kaydet</h2>
+                    <form [formGroup]="registerForm" (ngSubmit)="onSubmit()">
+                        <div class="mb-3">
+                            <label class="form-label">Kullanıcı Adı:</label>
+                            <input formControlName="username" type="text" class="form-control"
+                                   [class.is-invalid]="(registerForm.get('username')?.invalid && registerForm.get('username')?.touched) || (validationErrors?.username)">
+                            <div *ngIf="(registerForm.get('username')?.invalid && registerForm.get('username')?.touched) || (validationErrors?.username)"
+                                 class="alert alert-danger mt-3">
+                                <span *ngIf="registerForm.get('username')?.errors?.['required']">Kullanıcı adı zorunludur.</span>
+                                <span *ngIf="registerForm.get('username')?.errors?.['minlength']">Kullanıcı adı en az 3 karakter olmalı.</span>
+                                <span *ngIf="registerForm.get('username')?.errors?.['pattern']">Kullanıcı adı sadece harf, sayı ve _ içerebilir.</span>
+                                <span *ngIf="validationErrors?.username">
+                                    {{ validationErrors.username[0] }}
+                                </span>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Şifre:</label>
+                            <input formControlName="password" type="password" class="form-control"
+                                   [class.is-invalid]="(registerForm.get('password')?.invalid && registerForm.get('password')?.touched) || (validationErrors?.password)">
+                            <div *ngIf="(registerForm.get('password')?.invalid && registerForm.get('password')?.touched) || (validationErrors?.password)"
+                                 class="alert alert-danger mt-3">
+                                <div *ngIf="registerForm.get('password')?.errors?.['required']">Şifre zorunludur.</div>
+                                <div *ngIf="registerForm.get('password')?.errors?.['minlength']">Şifre en az 6 karakter olmalı.</div>
+                                <div *ngIf="registerForm.get('password')?.errors?.['pattern']">Şifre büyük harf, küçük harf, rakam ve özel karakter içermelidir.</div>
+                                <div *ngIf="validationErrors?.password">
+                                    {{ validationErrors.password[0] }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <button type="submit"
+                                [disabled]="registerForm.invalid"
+                                class="btn btn-primary w-100 rounded-pill shadow-sm">
+                            Firma Yetkilisi Kaydet
+                        </button>
+                    </form>
+
+                    <div *ngIf="successMsg" class="alert alert-success mt-3">{{successMsg}}</div>
+                    <div *ngIf="errorMsg" class="alert alert-danger mt-3">{{errorMsg}}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

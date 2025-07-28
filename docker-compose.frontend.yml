@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  angularclient:
+    build:
+      context: ./ClientAngular
+      dockerfile: Dockerfile
+    container_name: project-angular
+    ports:
+      - "4200:80"
+    networks:
+      - project-net
+
+networks:
+  project-net:
+    external: true
+    name: project-net

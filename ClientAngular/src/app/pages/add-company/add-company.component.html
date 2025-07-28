@@ -1,0 +1,55 @@
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6 col-lg-5">
+            <div class="card shadow-sm rounded-4">
+                <div class="card-body">
+                    <h2 class="mb-4 text-center">Firma Ekle</h2>
+                    <form [formGroup]="companyForm" (ngSubmit)="onSubmit()">
+                        <div class="mb-3">
+                            <label class="form-label">Firma Adı:</label>
+                            <input formControlName="name" type="text" class="form-control"
+                                   [class.is-invalid]="companyForm.get('name')?.invalid && companyForm.get('name')?.touched">
+                            <div *ngIf="companyForm.get('name')?.invalid && companyForm.get('name')?.touched"
+                                 class="alert alert-danger mt-3">
+                                <div *ngIf="companyForm.get('name')?.errors?.['required']">Firma adı zorunludur.</div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Fiyat Yılı:</label>
+                            <input formControlName="year" type="number" class="form-control" min="2000" [max]="currentYear"
+                                   [class.is-invalid]="companyForm.get('year')?.invalid && companyForm.get('year')?.touched">
+                            <div *ngIf="companyForm.get('year')?.invalid && companyForm.get('year')?.touched"
+                                 class="alert alert-danger mt-3">
+                                <div *ngIf="companyForm.get('year')?.errors?.['required']">Fiyat yılı zorunludur.</div>
+                                <div *ngIf="companyForm.get('year')?.errors?.['pattern']">Yıl 4 haneli olmalıdır (ör: 2025).</div>
+                                <div *ngIf="companyForm.get('year')?.errors?.['max']">Yıl, içinde bulunduğumuz yılı geçemez.</div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Birim Fiyat (₺):</label>
+                            <input formControlName="price" type="text" class="form-control" (input)="formatPrice($event)" maxlength="15"
+                                   [class.is-invalid]="companyForm.get('price')?.invalid && companyForm.get('price')?.touched">
+                            <div *ngIf="companyForm.get('price')?.invalid && companyForm.get('price')?.touched"
+                                 class="alert alert-danger mt-3">
+                                <div *ngIf="companyForm.get('price')?.errors?.['required']">Fiyat zorunludur.</div>
+                                <div *ngIf="companyForm.get('price')?.errors?.['min']">Fiyat 0'dan büyük olmalıdır.</div>
+                                <div *ngIf="companyForm.get('price')?.errors?.['pattern']">Fiyat sadece sayısal karakterlerden oluşmalıdır.</div>
+                            </div>
+                        </div>
+
+                        <button type="submit"
+                                [disabled]="companyForm.invalid || loading"
+                                class="btn btn-primary w-100 rounded-pill shadow-sm">
+                            {{loading ? 'Kaydediliyor...' : 'Kaydet'}}
+                        </button>
+                    </form>
+
+                    <div *ngIf="successMsg" class="alert alert-success mt-3">{{successMsg}}</div>
+                    <div *ngIf="errorMsg" class="alert alert-danger mt-3">{{errorMsg}}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

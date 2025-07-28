@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+  mongo:
+    image: mongo
+    container_name: mongo
+    restart: always
+    ports:
+      - "27018:27017"
+    volumes:
+      - mongo-data:/data/db
+    networks:
+      - project-net
+
+volumes:
+  mongo-data:
+
+networks:
+  project-net:
+    external: true
+    name: project-net

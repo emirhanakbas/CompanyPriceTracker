@@ -1,0 +1,74 @@
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-7 col-lg-6">
+            <div class="card shadow-sm rounded-4">
+                <div class="card-body">
+                    <h2 class="mb-4 text-center">Teklif Al</h2>
+                    <form [formGroup]="offerForm" (ngSubmit)="onSubmit()">
+                        <div class="mb-3">
+                            <label class="form-label">Firma Seç:</label>
+                            <select class="form-select" formControlName="companyId">
+                                <option *ngFor="let company of companies" [value]="company.id">{{company.name}}</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Başlangıç Tarihi:</label>
+                            <input class="form-control" type="text" formControlName="startDate"
+                                   placeholder="Başlangıç tarihi seçiniz."
+                                   onfocus="(this.type='date')"
+                                   onblur="(this.type='text')"
+                                   [min]="todayDate">
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Bitiş Tarihi:</label>
+                            <input class="form-control" type="text" formControlName="endDate"
+                                   placeholder="Bitiş tarihi seçiniz."
+                                   onfocus="(this.type='date')"
+                                   onblur="(this.type='text')"
+                                   [min]="todayDate">
+                        </div>
+
+                        <div *ngIf="offerForm.errors?.['dateRangeInvalid'] && offerForm.touched" class="alert alert-danger mt-3">
+                            Bitiş tarihi, başlangıç tarihinden önce olamaz.
+                        </div>
+
+                        <button type="submit"
+                                [disabled]="offerForm.invalid || loading"
+                                class="btn btn-primary w-100 rounded-pill shadow-sm">
+                            {{loading ? 'Hesaplanıyor...' : 'Teklif Hesapla'}}
+                        </button>
+                    </form>
+
+                    <div *ngIf="successMsg" class="alert alert-success mt-3">{{successMsg}}</div>
+                    <div *ngIf="errorMsg" class="alert alert-danger mt-3">{{errorMsg}}</div>
+
+                    <div *ngIf="offerResult" class="mt-4">
+                        <h3>Hesaplanan Teklif:</h3>
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-striped table-sm text-center align-middle mt-2">
+                                <thead class="table-secondary">
+                                <tr>
+                                    <th>Firma</th>
+                                    <th>Uzman/Gün</th>
+                                    <th>Birim Fiyat (₺)</th>
+                                    <th>Toplam Fiyat (₺)</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr>
+                                    <td>{{offerResult.data.companyName}}</td>
+                                    <td>{{offerResult.data.expertDayCount}}</td>
+                                    <td>{{ offerResult.data.unitPrice | number:'1.2-2':'tr-TR'}}</td>
+                                    <td>{{ offerResult.data.totalPrice | number:'1.2-2':'tr-TR'}}</td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
